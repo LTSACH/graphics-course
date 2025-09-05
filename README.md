@@ -11,13 +11,14 @@ Python/
     ├── triangle_demo.py                # Triangle with interpolated colors
     ├── triangle_pygame.py              # Triangle demo using Pygame
     ├── phong_triangle.py               # Triangle with Phong lighting
+    ├── advanced_phong_triangle.py      # Advanced Phong lighting with multiple lights
     ├── textured_triangle.py            # Triangle with texture mapping
     └── advanced_textured_triangle.py   # Advanced textured triangle with effects
 ```
 
 ## Triangle Demos
 
-Six different approaches to rendering triangles in Python:
+Seven different approaches to rendering triangles in Python:
 
 ### 1. Simple Triangle (`simple_triangle.py`)
 - Basic triangle rendering with minimal setup
@@ -42,13 +43,19 @@ Six different approaches to rendering triangles in Python:
 - Normal vectors and material properties
 - Interactive lighting controls
 
-### 5. Textured Triangle (`textured_triangle.py`)
+### 5. Advanced Phong Triangle (`advanced_phong_triangle.py`)
+- Multiple light sources (directional, point, spot)
+- Advanced Phong lighting calculations
+- Interactive light positioning
+- Material property controls
+
+### 6. Textured Triangle (`textured_triangle.py`)
 - Triangle with texture mapping
 - Rose texture with animation effects
 - Texture coordinate mapping
 - Rotation and pulsing effects
 
-### 6. Advanced Textured Triangle (`advanced_textured_triangle.py`)
+### 7. Advanced Textured Triangle (`advanced_textured_triangle.py`)
 - Multiple triangles with different effects
 - Wave, pulse, and rotation animations
 - Interactive effect switching
@@ -81,6 +88,7 @@ python triangle_pygame.py
 
 # Advanced demos
 python phong_triangle.py
+python advanced_phong_triangle.py
 python textured_triangle.py
 python advanced_textured_triangle.py
 ```
@@ -90,4 +98,5 @@ python advanced_textured_triangle.py
 - **OpenGL demos**: ESC to exit, close window to exit
 - **Pygame demo**: ESC to exit, close window to exit
 - **Phong Triangle**: WASD to move light, R to reset
+- **Advanced Phong**: WASD to move lights, 1-3 to switch light types, R to reset
 - **Advanced Textured**: 1-3 to switch effects, WASD to move camera
