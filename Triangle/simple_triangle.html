@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Triangle - Computer Graphics (WebGL)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: #FF6B35;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+        }
+        
+        canvas {
+            border: 2px solid #FF6B35;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            max-width: 600px;
+        }
+        
+        .info h3 {
+            color: #FF6B35;
+            margin-top: 0;
+        }
+        
+        .error {
+            color: #ff6b6b;
+            background-color: #3a1a1a;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Triangle Demo</h1>
+    <p class="subtitle">WebGL with Basic Shader-Based Approach</p>
+    
+    <canvas id="glCanvas" width="800" height="600"></canvas>
+    
+    <div class="controls">
+        <p>Press <strong>ESC</strong> or close window to exit</p>
+    </div>
+    
+    <div class="info">
+        <h3>Features:</h3>
+        <ul>
+            <li><strong>WebGL 1.0</strong> with basic shader pipeline</li>
+            <li><strong>Simple Vertex and Fragment Shaders</strong></li>
+            <li><strong>VBO and VAO</strong> for efficient rendering</li>
+            <li><strong>Single Color Triangle</strong> (orange)</li>
+            <li><strong>Minimal Code</strong> for learning purposes</li>
+        </ul>
+        
+        <h3>Technical Details:</h3>
+        <ul>
+            <li>Uses <code>gl.createShader()</code> and <code>gl.createProgram()</code></li>
+            <li>Vertex Buffer Objects for data storage</li>
+            <li>Vertex Array Objects for attribute configuration</li>
+            <li>Uniform color in fragment shader</li>
+        </ul>
+    </div>
+
+    <script>
+        class SimpleTriangleRenderer {
+            constructor() {
+                this.canvas = document.getElementById('glCanvas');
+                this.gl = null;
+                this.shaderProgram = null;
+                this.vao = null;
+                this.vbo = null;
+                
+                // Simple vertex data (position only)
+                this.vertices = new Float32Array([
+                    -0.5, -0.5, 0.0,  // Left
+                     0.5, -0.5, 0.0,  // Right
+                     0.0,  0.5, 0.0   // Top
+                ]);
+                
+                // Simple shader sources
+                this.vertexShaderSource = `
+                    attribute vec3 position;
+                    
+                    void main() {
+                        gl_Position = vec4(position, 1.0);
+                    }
+                `;
+                
+                this.fragmentShaderSource = `
+                    precision mediump float;
+                    
+                    void main() {
+                        gl_FragColor = vec4(1.0, 0.5, 0.2, 1.0); // Orange color
+                    }
+                `;
+            }
+            
+            init() {
+                // Initialize WebGL context
+                this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+                if (!this.gl) {
+                    this.showError('WebGL is not supported by your browser');
+                    return false;
+                }
+                
+                console.log('WebGL initialized successfully');
+                console.log('WebGL Version:', this.gl.getParameter(this.gl.VERSION));
+                
+                // Create shaders
+                if (!this.createShaders()) {
+                    return false;
+                }
+                
+                // Setup buffers
+                this.setupBuffers();
+                
+                // Set up event listeners
+                this.setupEventListeners();
+                
+                return true;
+            }
+            
+            createShaders() {
+                // Create vertex shader
+                const vertexShader = this.gl.createShader(this.gl.VERTEX_SHADER);
+                this.gl.shaderSource(vertexShader, this.vertexShaderSource);
+                this.gl.compileShader(vertexShader);
+                
+                // Check compilation
+                if (!this.gl.getShaderParameter(vertexShader, this.gl.COMPILE_STATUS)) {
+                    const error = this.gl.getShaderInfoLog(vertexShader);
+                    this.showError('Vertex shader compilation failed: ' + error);
+                    return false;
+                }
+                
+                // Create fragment shader
+                const fragmentShader = this.gl.createShader(this.gl.FRAGMENT_SHADER);
+                this.gl.shaderSource(fragmentShader, this.fragmentShaderSource);
+                this.gl.compileShader(fragmentShader);
+                
+                // Check compilation
+                if (!this.gl.getShaderParameter(fragmentShader, this.gl.COMPILE_STATUS)) {
+                    const error = this.gl.getShaderInfoLog(fragmentShader);
+                    this.showError('Fragment shader compilation failed: ' + error);
+                    return false;
+                }
+                
+                // Create shader program
+                this.shaderProgram = this.gl.createProgram();
+                this.gl.attachShader(this.shaderProgram, vertexShader);
+                this.gl.attachShader(this.shaderProgram, fragmentShader);
+                this.gl.linkProgram(this.shaderProgram);
+                
+                // Check linking
+                if (!this.gl.getProgramParameter(this.shaderProgram, this.gl.LINK_STATUS)) {
+                    const error = this.gl.getProgramInfoLog(this.shaderProgram);
+                    this.showError('Shader program linking failed: ' + error);
+                    return false;
+                }
+                
+                // Clean up shaders
+                this.gl.deleteShader(vertexShader);
+                this.gl.deleteShader(fragmentShader);
+                
+                return true;
+            }
+            
+            setupBuffers() {
+                // Create and bind VAO (if supported)
+                if (this.gl.createVertexArray) {
+                    this.vao = this.gl.createVertexArray();
+                    this.gl.bindVertexArray(this.vao);
+                }
+                
+                // Create VBO
+                this.vbo = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, this.vertices, this.gl.STATIC_DRAW);
+                
+                // Position attribute
+                const positionLocation = this.gl.getAttribLocation(this.shaderProgram, 'position');
+                this.gl.enableVertexAttribArray(positionLocation);
+                this.gl.vertexAttribPointer(positionLocation, 3, this.gl.FLOAT, false, 3 * 4, 0);
+                
+                // Unbind
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, null);
+                if (this.vao) {
+                    this.gl.bindVertexArray(null);
+                }
+            }
+            
+            render() {
+                // Clear the canvas
+                this.gl.clearColor(0.2, 0.3, 0.3, 1.0);
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+                
+                // Use shader program
+                this.gl.useProgram(this.shaderProgram);
+                
+                // Bind VAO if available
+                if (this.vao) {
+                    this.gl.bindVertexArray(this.vao);
+                } else {
+                    // Fallback for browsers without VAO support
+                    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
+                    const positionLocation = this.gl.getAttribLocation(this.shaderProgram, 'position');
+                    this.gl.enableVertexAttribArray(positionLocation);
+                    this.gl.vertexAttribPointer(positionLocation, 3, this.gl.FLOAT, false, 3 * 4, 0);
+                }
+                
+                // Draw triangle
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+            }
+            
+            setupEventListeners() {
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                    this.canvas.width = Math.min(800, window.innerWidth - 40);
+                    this.canvas.height = Math.min(600, window.innerHeight - 200);
+                    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+                });
+                
+                // Handle ESC key
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape') {
+                        this.cleanup();
+                        window.close();
+                    }
+                });
+            }
+            
+            run() {
+                console.log('Simple Triangle Demo is running!');
+                console.log('Press ESC or close window to exit');
+                
+                const animate = () => {
+                    this.render();
+                    requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+            
+            cleanup() {
+                if (this.vao) this.gl.deleteVertexArray(this.vao);
+                if (this.vbo) this.gl.deleteBuffer(this.vbo);
+                if (this.shaderProgram) this.gl.deleteProgram(this.shaderProgram);
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error';
+                errorDiv.textContent = message;
+                document.body.appendChild(errorDiv);
+                console.error(message);
+            }
+        }
+        
+        // Initialize and run the demo
+        window.addEventListener('load', () => {
+            const renderer = new SimpleTriangleRenderer();
+            
+            if (renderer.init()) {
+                renderer.run();
+            }
+        });
+    </script>
+</body>
+</html>

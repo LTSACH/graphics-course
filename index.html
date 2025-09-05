@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Computer Graphics Demos - WebGL</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+            display: block;
+        }
+        
+        .demo-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .demo-card h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #4ecdc4;
+        }
+        
+        .demo-card p {
+            font-size: 0.9em;
+            opacity: 0.8;
+            line-height: 1.4;
+        }
+        
+        .demo-card ul {
+            text-align: left;
+            margin-top: 10px;
+            font-size: 0.85em;
+            opacity: 0.7;
+        }
+        
+        .demo-card li {
+            margin: 3px 0;
+        }
+        
+        .features {
+            margin-top: 40px;
+            text-align: left;
+        }
+        
+        .features h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4ecdc4;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .feature-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #4ecdc4;
+        }
+        
+        .feature-item h4 {
+            color: #4ecdc4;
+            margin-bottom: 5px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+        
+        .tech-badge {
+            display: inline-block;
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Computer Graphics Demos</h1>
+        <p class="subtitle">WebGL with Modern Shader-Based Approach</p>
+        
+        <div class="demo-grid">
+            <a href="Triangle/triangle_demo.html" class="demo-card">
+                <h3>🎨 Triangle Demo</h3>
+                <p>Full-featured demo with modern shader pipeline</p>
+                <ul>
+                    <li>WebGL 1.0 with shaders</li>
+                    <li>VBO and VAO</li>
+                    <li>Colored triangle (RGB)</li>
+                    <li>Responsive design</li>
+                </ul>
+            </a>
+            
+            <a href="Triangle/simple_triangle.html" class="demo-card">
+                <h3>🔺 Simple Triangle</h3>
+                <p>Basic demo for learning WebGL fundamentals</p>
+                <ul>
+                    <li>Minimal shader setup</li>
+                    <li>Single color triangle</li>
+                    <li>Easy to understand</li>
+                    <li>Perfect for beginners</li>
+                </ul>
+            </a>
+            
+            <a href="Triangle/interactive_triangle.html" class="demo-card">
+                <h3>🎮 Interactive Demo</h3>
+                <p>Advanced demo with mouse interaction and animation</p>
+                <ul>
+                    <li>Mouse interaction</li>
+                    <li>Real-time animation</li>
+                    <li>Dynamic color changes</li>
+                    <li>Interactive controls</li>
+                </ul>
+            </a>
+            
+            <a href="Triangle/phong_triangle.html" class="demo-card">
+                <h3>💡 Phong Shading</h3>
+                <p>Realistic lighting with Phong reflection model</p>
+                <ul>
+                    <li>Ambient, diffuse, specular lighting</li>
+                    <li>Interactive light source</li>
+                    <li>Adjustable shininess</li>
+                    <li>3D perspective projection</li>
+                </ul>
+            </a>
+            
+            <a href="Triangle/simple_rose_texture.html" class="demo-card">
+                <h3>🌹 Rose Texture</h3>
+                <p>Simple triangle with rose texture mapping</p>
+                <ul>
+                    <li>Image texture loading</li>
+                    <li>Texture coordinates</li>
+                    <li>WebGL texture handling</li>
+                    <li>Clean, simple implementation</li>
+                </ul>
+            </a>
+            
+            <a href="Triangle/rose_textured_triangle.html" class="demo-card">
+                <h3>🎨 Advanced Texture</h3>
+                <p>Full-featured textured triangle with effects</p>
+                <ul>
+                    <li>Rose texture with rotation</li>
+                    <li>Color tinting controls</li>
+                    <li>Texture effects (invert, grayscale)</li>
+                    <li>Matrix transformations</li>
+                </ul>
+            </a>
+        </div>
+        
+        <div class="features">
+            <h2>Key Features</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h4>🚀 Modern WebGL</h4>
+                    <p>Uses WebGL 1.0 with shader-based rendering pipeline</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4>🎯 Cross-platform</h4>
+                    <p>Works on any device with a modern web browser</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4>📱 Responsive</h4>
+                    <p>Adapts to different screen sizes and orientations</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4>🔧 Educational</h4>
+                    <p>Well-commented code perfect for learning graphics programming</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4>⚡ Real-time</h4>
+                    <p>Interactive demos with smooth 60fps animation</p>
+                </div>
+                
+                <div class="feature-item">
+                    <h4>🎨 Shader-based</h4>
+                    <p>Uses GLSL ES vertex and fragment shaders</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>
+                <span class="tech-badge">WebGL</span>
+                <span class="tech-badge">GLSL ES</span>
+                <span class="tech-badge">JavaScript</span>
+                <span class="tech-badge">HTML5</span>
+                <span class="tech-badge">CSS3</span>
+            </p>
+            <p style="margin-top: 10px;">
+                Part of the Computer Graphics Demo Collection<br>
+                Also available: <strong>Python (PyOpenGL)</strong> and <strong>C++ (OpenGL)</strong>
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.demo-card');
+            
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+            
+            // Add click animation
+            cards.forEach(card => {
+                card.addEventListener('click', function(e) {
+                    // Create ripple effect
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255, 255, 255, 0.3)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.left = e.offsetX + 'px';
+                    ripple.style.top = e.offsetY + 'px';
+                    ripple.style.width = ripple.style.height = '20px';
+                    ripple.style.pointerEvents = 'none';
+                    
+                    this.style.position = 'relative';
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+        });
+        
+        // Add CSS for ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
