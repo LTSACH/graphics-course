@@ -6,7 +6,7 @@ This repository contains sample code and demos for Computer Graphics course in P
 
 **Try the WebGL demos directly in your browser:**
 - **Main Demo Page**: https://ltsach.github.io/graphics-course/
-- **All Triangle Demos**: https://ltsach.github.io/graphics-course/Triangle/
+- **Triangle Demos**: https://ltsach.github.io/graphics-course/Triangle/
 
 No installation required - just click and see the results!
 
@@ -275,7 +275,7 @@ cd CPP/build
 
 **Option 1: Live Demos (Recommended)**
 - **Main Page**: https://ltsach.github.io/graphics-course/
-- **All Demos**: https://ltsach.github.io/graphics-course/Triangle/
+- **Triangle Demos**: https://ltsach.github.io/graphics-course/Triangle/
 
 **Option 2: Local Development**
 ```bash
