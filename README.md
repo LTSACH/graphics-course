@@ -7,42 +7,62 @@ This repository contains sample code and demos for Computer Graphics course.
 ```
 Python/
 └── Triangle/
-    └── triangle_demo.py    # Triangle rendering demo with interpolated colors
+    ├── simple_triangle.py      # Basic triangle demo (minimal setup)
+    ├── triangle_demo.py        # Triangle with interpolated colors
+    └── triangle_pygame.py      # Triangle demo using Pygame
 ```
 
-## Triangle Demo
+## Triangle Demos
 
-A simple demonstration of rendering a triangle using PyOpenGL with modern shader-based approach.
+Three different approaches to rendering triangles in Python:
 
-### Features
+### 1. Simple Triangle (`simple_triangle.py`)
+- Basic triangle rendering with minimal setup
+- Single color triangle
+- Good for understanding fundamentals
 
+### 2. Triangle Demo (`triangle_demo.py`)
+- Triangle with interpolated colors (red, green, blue vertices)
 - Modern OpenGL Core Profile (3.3+)
 - Vertex and Fragment Shaders
 - VAO/VBO setup
-- Color interpolation
 - GLFW window management
 
-### Requirements
+### 3. Triangle Pygame (`triangle_pygame.py`)
+- Triangle rendering using Pygame
+- Alternative approach for beginners
+- Simpler setup than OpenGL
+
+## Requirements
 
 - Python 3.6+
-- PyOpenGL
+- PyOpenGL (for OpenGL demos)
 - NumPy
-- GLFW
+- GLFW (for OpenGL demos)
+- Pygame (for pygame demo)
 
-### Installation
+## Installation
 
 ```bash
-pip install PyOpenGL numpy glfw
+pip install PyOpenGL numpy glfw pygame
 ```
 
-### Usage
+## Usage
 
 ```bash
 cd Python/Triangle
+
+# Run simple triangle demo
+python simple_triangle.py
+
+# Run triangle with interpolated colors
 python triangle_demo.py
+
+# Run triangle using Pygame
+python triangle_pygame.py
 ```
 
-### Controls
+## Controls
 
-- ESC: Exit the application
-- Close window: Exit the application
+- **OpenGL demos**: ESC to exit, close window to exit
+- **Pygame demo**: ESC to exit, close window to exit
