@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Rose Texture - WebGL</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        canvas {
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #333;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .error {
+            background-color: #4a1a1a;
+            color: #ff6b6b;
+        }
+        
+        .success {
+            background-color: #1a4a1a;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple Rose Texture</h1>
+    <canvas id="glCanvas" width="400" height="400"></canvas>
+    <div id="status" class="status">Initializing...</div>
+
+    <script>
+        class SimpleRoseTextureRenderer {
+            constructor() {
+                this.canvas = document.getElementById('glCanvas');
+                this.gl = null;
+                this.program = null;
+                this.vbo = null;
+                this.texture = null;
+                
+                this.init();
+            }
+            
+            init() {
+                try {
+                    this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+                    
+                    if (!this.gl) {
+                        throw new Error('WebGL not supported');
+                    }
+                    
+                    this.updateStatus('WebGL context created');
+                    this.createShaders();
+                    this.setupBuffers();
+                    this.loadRoseTexture();
+                    
+                } catch (error) {
+                    this.updateStatus(`Error: ${error.message}`, 'error');
+                    console.error('Error:', error);
+                }
+            }
+            
+            createShaders() {
+                const vertexShaderSource = `
+                    attribute vec3 position;
+                    attribute vec2 texCoord;
+                    varying vec2 vTexCoord;
+                    
+                    void main() {
+                        gl_Position = vec4(position, 1.0);
+                        vTexCoord = texCoord;
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    varying vec2 vTexCoord;
+                    uniform sampler2D texture1;
+                    
+                    void main() {
+                        vec4 texColor = texture2D(texture1, vTexCoord);
+                        gl_FragColor = texColor;
+                    }
+                `;
+                
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
+                
+                this.program = this.gl.createProgram();
+                this.gl.attachShader(this.program, vertexShader);
+                this.gl.attachShader(this.program, fragmentShader);
+                this.gl.linkProgram(this.program);
+                
+                if (!this.gl.getProgramParameter(this.program, this.gl.LINK_STATUS)) {
+                    throw new Error('Program linking failed: ' + this.gl.getProgramInfoLog(this.program));
+                }
+                
+                this.updateStatus('Shaders created');
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    const error = this.gl.getShaderInfoLog(shader);
+                    this.gl.deleteShader(shader);
+                    throw new Error(`Shader compilation failed: ${error}`);
+                }
+                
+                return shader;
+            }
+            
+            setupBuffers() {
+                // Triangle with texture coordinates (flipped for OpenGL)
+                const vertices = new Float32Array([
+                    // positions    // texture coords (flipped)
+                     0.0,  0.5, 0.0,   0.5, 0.0,  // top
+                    -0.5, -0.5, 0.0,   0.0, 1.0,  // bottom left
+                     0.5, -0.5, 0.0,   1.0, 1.0   // bottom right
+                ]);
+                
+                this.vbo = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                this.positionLocation = this.gl.getAttribLocation(this.program, 'position');
+                this.texCoordLocation = this.gl.getAttribLocation(this.program, 'texCoord');
+                this.textureLocation = this.gl.getUniformLocation(this.program, 'texture1');
+                
+                // Debug attribute locations
+                console.log('Position location:', this.positionLocation);
+                console.log('TexCoord location:', this.texCoordLocation);
+                console.log('Texture location:', this.textureLocation);
+                
+                this.updateStatus('Buffers created');
+            }
+            
+            loadRoseTexture() {
+                this.updateStatus('Loading rose texture...');
+                
+                // Create texture
+                this.texture = this.gl.createTexture();
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+                
+                // Set texture parameters for non-power-of-two textures
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.LINEAR);
+                this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.LINEAR);
+                
+                // Load rose.png image
+                const image = new Image();
+                
+                image.onload = () => {
+                    console.log('Rose image loaded successfully:', image.width, 'x', image.height);
+                    
+                    // Bind texture before uploading
+                    this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+                    
+                    // Upload image data to texture
+                    this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, this.gl.RGBA, this.gl.UNSIGNED_BYTE, image);
+                    
+                    // Generate mipmaps for better quality
+                    this.gl.generateMipmap(this.gl.TEXTURE_2D);
+                    
+                    this.updateStatus(`Rose texture loaded successfully (${image.width}x${image.height})`, 'success');
+                    this.render();
+                };
+                
+                image.onerror = (error) => {
+                    console.error('Failed to load rose.png:', error);
+                    this.updateStatus('Failed to load rose.png, using fallback texture', 'error');
+                    this.createFallbackTexture();
+                };
+                
+                // Try to load rose.png
+                console.log('Attempting to load rose.png...');
+                image.src = 'rose.png';
+                
+                // Add timeout to detect if image loading is stuck
+                setTimeout(() => {
+                    if (!image.complete) {
+                        console.warn('Image loading timeout, using fallback');
+                        this.updateStatus('Image loading timeout, using fallback texture', 'error');
+                        this.createFallbackTexture();
+                    }
+                }, 3000);
+            }
+            
+            createFallbackTexture() {
+                // Create a simple test texture as fallback
+                const size = 64;
+                const data = new Uint8Array(size * size * 4);
+                
+                for (let y = 0; y < size; y++) {
+                    for (let x = 0; x < size; x++) {
+                        const index = (y * size + x) * 4;
+                        
+                        // Create a simple checkerboard pattern
+                        const checker = ((x / 8) + (y / 8)) % 2;
+                        
+                        if (checker < 1) {
+                            // White squares
+                            data[index] = 255;     // Red
+                            data[index + 1] = 255; // Green
+                            data[index + 2] = 255; // Blue
+                            data[index + 3] = 255; // Alpha
+                        } else {
+                            // Red squares (like rose)
+                            data[index] = 255;     // Red
+                            data[index + 1] = 100; // Green
+                            data[index + 2] = 100; // Blue
+                            data[index + 3] = 255; // Alpha
+                        }
+                    }
+                }
+                
+                // Upload fallback texture data
+                this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA, size, size, 0, this.gl.RGBA, this.gl.UNSIGNED_BYTE, data);
+                
+                this.updateStatus('Fallback test texture created', 'success');
+                this.render();
+            }
+            
+            render() {
+                // Clear canvas
+                this.gl.clearColor(0.1, 0.1, 0.1, 1.0);
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+                
+                // Use program
+                this.gl.useProgram(this.program);
+                
+                // Setup attributes
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
+                this.gl.enableVertexAttribArray(this.positionLocation);
+                this.gl.vertexAttribPointer(this.positionLocation, 3, this.gl.FLOAT, false, 5 * 4, 0);
+                this.gl.enableVertexAttribArray(this.texCoordLocation);
+                this.gl.vertexAttribPointer(this.texCoordLocation, 2, this.gl.FLOAT, false, 5 * 4, 3 * 4);
+                
+                // Bind texture
+                this.gl.activeTexture(this.gl.TEXTURE0);
+                this.gl.bindTexture(this.gl.TEXTURE_2D, this.texture);
+                this.gl.uniform1i(this.textureLocation, 0);
+                
+                // Draw triangle
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+                
+                this.updateStatus('Rendering complete - you should see a textured triangle');
+            }
+            
+            updateStatus(message, type = '') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            new SimpleRoseTextureRenderer();
+        });
+    </script>
+</body>
+</html>

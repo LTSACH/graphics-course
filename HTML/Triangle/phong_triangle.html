@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phong Shading Triangle Demo - Computer Graphics (WebGL)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        h1 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #888;
+            margin-bottom: 30px;
+        }
+        
+        canvas {
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            width: 400px;
+            height: 400px;
+        }
+        
+        .controls {
+            margin-top: 15px;
+            text-align: center;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 800px;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            min-width: 80px;
+        }
+        
+        .control-group label {
+            font-size: 14px;
+            color: #ccc;
+        }
+        
+        .control-group input[type="range"] {
+            width: 80px;
+        }
+        
+        .control-group button {
+            padding: 8px 12px;
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .control-group button:hover {
+            background-color: #444;
+        }
+        
+        .control-group button.active {
+            background-color: #ff6b6b;
+        }
+        
+        .info {
+            margin-top: 15px;
+            padding: 12px;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            max-width: 600px;
+        }
+        
+        .info h3 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        
+        .info ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+        
+        .info li {
+            margin: 3px 0;
+        }
+        
+        .status {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #333;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .error {
+            background-color: #4a1a1a;
+            color: #ff6b6b;
+        }
+        
+        .success {
+            background-color: #1a4a1a;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Phong Shading Triangle Demo</h1>
+    <p class="subtitle">WebGL Phong Lighting Model with Interactive Controls</p>
+    
+    <canvas id="glCanvas" width="400" height="400"></canvas>
+    
+    <div class="controls">
+        <div class="control-group">
+            <label>Rotation Speed:</label>
+            <input type="range" id="rotationSlider" min="0" max="5" step="0.1" value="1">
+            <span id="rotationValue">1.0</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Light Position X:</label>
+            <input type="range" id="lightXSlider" min="-2" max="2" step="0.1" value="1">
+            <span id="lightXValue">1.0</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Light Position Y:</label>
+            <input type="range" id="lightYSlider" min="-2" max="2" step="0.1" value="1">
+            <span id="lightYValue">1.0</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Light Position Z:</label>
+            <input type="range" id="lightZSlider" min="-2" max="2" step="0.1" value="1">
+            <span id="lightZValue">1.0</span>
+        </div>
+        
+        <div class="control-group">
+            <label>Shininess:</label>
+            <input type="range" id="shininessSlider" min="1" max="128" step="1" value="32">
+            <span id="shininessValue">32</span>
+        </div>
+        
+        <div class="control-group">
+            <button id="resetBtn">Reset</button>
+            <button id="animateBtn" class="active">Animate</button>
+        </div>
+    </div>
+    
+    <div class="info">
+        <h3>🎮 Controls</h3>
+        <ul>
+            <li><strong>Rotation Speed:</strong> Control triangle rotation speed</li>
+            <li><strong>Light Position:</strong> Move light source in 3D space</li>
+            <li><strong>Shininess:</strong> Control specular reflection intensity</li>
+            <li><strong>Animate:</strong> Toggle rotation animation</li>
+        </ul>
+        
+        <h3>🔬 Phong Shading Features</h3>
+        <ul>
+            <li><strong>Ambient Lighting:</strong> Base illumination</li>
+            <li><strong>Diffuse Lighting:</strong> Lambertian reflection</li>
+            <li><strong>Specular Lighting:</strong> Blinn-Phong reflection</li>
+            <li><strong>Normal Vectors:</strong> Per-vertex normals</li>
+            <li><strong>Matrix Transformations:</strong> Model, view, projection</li>
+        </ul>
+    </div>
+    
+    <div id="status" class="status">Initializing...</div>
+
+    <script>
+        class PhongTriangleRenderer {
+            constructor() {
+                this.canvas = document.getElementById('glCanvas');
+                this.gl = null;
+                this.program = null;
+                this.vbo = null;
+                
+                // Animation parameters
+                this.rotation = 0;
+                this.rotationSpeed = 1.0;
+                this.animate = true;
+                
+                // Lighting parameters
+                this.lightPosition = [1.0, 1.0, 1.0];
+                this.shininess = 32.0;
+                
+                // Uniform locations
+                this.uniforms = {};
+                
+                this.init();
+            }
+            
+            init() {
+                try {
+                    this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+                    
+                    if (!this.gl) {
+                        throw new Error('WebGL not supported');
+                    }
+                    
+                    this.updateStatus('WebGL context created');
+                    this.createShaders();
+                    this.setupBuffers();
+                    this.setupEventListeners();
+                    
+                    // Start render loop
+                    this.render();
+                    
+                } catch (error) {
+                    this.updateStatus(`Error: ${error.message}`, 'error');
+                    console.error('Initialization error:', error);
+                }
+            }
+            
+            createShaders() {
+                const vertexShaderSource = `
+                    attribute vec3 position;
+                    attribute vec3 normal;
+                    uniform mat4 model;
+                    uniform mat4 view;
+                    uniform mat4 projection;
+                    uniform mat3 normalMatrix;
+                    
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    
+                    void main() {
+                        vNormal = normalize(normalMatrix * normal);
+                        vPosition = vec3(model * vec4(position, 1.0));
+                        gl_Position = projection * view * model * vec4(position, 1.0);
+                    }
+                `;
+                
+                const fragmentShaderSource = `
+                    precision mediump float;
+                    
+                    varying vec3 vNormal;
+                    varying vec3 vPosition;
+                    
+                    uniform vec3 lightPosition;
+                    uniform float shininess;
+                    uniform vec3 viewPosition;
+                    
+                    void main() {
+                        // Material properties
+                        vec3 ambientColor = vec3(0.2, 0.3, 0.8);
+                        vec3 diffuseColor = vec3(0.2, 0.3, 0.8);
+                        vec3 specularColor = vec3(1.0, 1.0, 1.0);
+                        
+                        // Ambient lighting
+                        float ambientStrength = 0.3;
+                        vec3 ambient = ambientStrength * ambientColor;
+                        
+                        // Diffuse lighting
+                        vec3 lightDir = normalize(lightPosition - vPosition);
+                        float diff = max(dot(vNormal, lightDir), 0.0);
+                        vec3 diffuse = diff * diffuseColor;
+                        
+                        // Specular lighting (Blinn-Phong)
+                        vec3 viewDir = normalize(viewPosition - vPosition);
+                        vec3 halfwayDir = normalize(lightDir + viewDir);
+                        float spec = pow(max(dot(vNormal, halfwayDir), 0.0), shininess);
+                        vec3 specular = spec * specularColor;
+                        
+                        // Combine all lighting
+                        vec3 result = ambient + diffuse + specular;
+                        gl_FragColor = vec4(result, 1.0);
+                    }
+                `;
+                
+                // Create and compile vertex shader
+                const vertexShader = this.createShader(this.gl.VERTEX_SHADER, vertexShaderSource);
+                
+                // Create and compile fragment shader
+                const fragmentShader = this.createShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
+                
+                // Create program
+                this.program = this.gl.createProgram();
+                this.gl.attachShader(this.program, vertexShader);
+                this.gl.attachShader(this.program, fragmentShader);
+                this.gl.linkProgram(this.program);
+                
+                if (!this.gl.getProgramParameter(this.program, this.gl.LINK_STATUS)) {
+                    throw new Error('Program linking failed: ' + this.gl.getProgramInfoLog(this.program));
+                }
+                
+                // Get uniform locations
+                this.uniforms.model = this.gl.getUniformLocation(this.program, 'model');
+                this.uniforms.view = this.gl.getUniformLocation(this.program, 'view');
+                this.uniforms.projection = this.gl.getUniformLocation(this.program, 'projection');
+                this.uniforms.normalMatrix = this.gl.getUniformLocation(this.program, 'normalMatrix');
+                this.uniforms.lightPosition = this.gl.getUniformLocation(this.program, 'lightPosition');
+                this.uniforms.shininess = this.gl.getUniformLocation(this.program, 'shininess');
+                this.uniforms.viewPosition = this.gl.getUniformLocation(this.program, 'viewPosition');
+                
+                this.updateStatus('Shaders compiled and linked successfully', 'success');
+            }
+            
+            createShader(type, source) {
+                const shader = this.gl.createShader(type);
+                this.gl.shaderSource(shader, source);
+                this.gl.compileShader(shader);
+                
+                if (!this.gl.getShaderParameter(shader, this.gl.COMPILE_STATUS)) {
+                    const error = this.gl.getShaderInfoLog(shader);
+                    this.gl.deleteShader(shader);
+                    throw new Error(`Shader compilation failed: ${error}`);
+                }
+                
+                return shader;
+            }
+            
+            setupBuffers() {
+                // Triangle with normals
+                const vertices = new Float32Array([
+                    // positions        // normals
+                     0.0,  0.5, 0.0,    0.0, 0.0, 1.0,  // top
+                    -0.5, -0.5, 0.0,    0.0, 0.0, 1.0,  // bottom left
+                     0.5, -0.5, 0.0,    0.0, 0.0, 1.0   // bottom right
+                ]);
+                
+                // Create VBO
+                this.vbo = this.gl.createBuffer();
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
+                this.gl.bufferData(this.gl.ARRAY_BUFFER, vertices, this.gl.STATIC_DRAW);
+                
+                // Get attribute locations
+                this.positionLocation = this.gl.getAttribLocation(this.program, 'position');
+                this.normalLocation = this.gl.getAttribLocation(this.program, 'normal');
+                
+                this.updateStatus('Buffers created successfully', 'success');
+            }
+            
+            setupEventListeners() {
+                // Rotation speed slider
+                const rotationSlider = document.getElementById('rotationSlider');
+                const rotationValue = document.getElementById('rotationValue');
+                rotationSlider.addEventListener('input', (e) => {
+                    this.rotationSpeed = parseFloat(e.target.value);
+                    rotationValue.textContent = this.rotationSpeed.toFixed(1);
+                });
+                
+                // Light position sliders
+                const lightXSlider = document.getElementById('lightXSlider');
+                const lightXValue = document.getElementById('lightXValue');
+                lightXSlider.addEventListener('input', (e) => {
+                    this.lightPosition[0] = parseFloat(e.target.value);
+                    lightXValue.textContent = this.lightPosition[0].toFixed(1);
+                });
+                
+                const lightYSlider = document.getElementById('lightYSlider');
+                const lightYValue = document.getElementById('lightYValue');
+                lightYSlider.addEventListener('input', (e) => {
+                    this.lightPosition[1] = parseFloat(e.target.value);
+                    lightYValue.textContent = this.lightPosition[1].toFixed(1);
+                });
+                
+                const lightZSlider = document.getElementById('lightZSlider');
+                const lightZValue = document.getElementById('lightZValue');
+                lightZSlider.addEventListener('input', (e) => {
+                    this.lightPosition[2] = parseFloat(e.target.value);
+                    lightZValue.textContent = this.lightPosition[2].toFixed(1);
+                });
+                
+                // Shininess slider
+                const shininessSlider = document.getElementById('shininessSlider');
+                const shininessValue = document.getElementById('shininessValue');
+                shininessSlider.addEventListener('input', (e) => {
+                    this.shininess = parseFloat(e.target.value);
+                    shininessValue.textContent = this.shininess;
+                });
+                
+                // Reset button
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.reset();
+                });
+                
+                // Animate button
+                document.getElementById('animateBtn').addEventListener('click', () => {
+                    this.animate = !this.animate;
+                    this.updateAnimateButton();
+                });
+                
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.resizeCanvas();
+                });
+            }
+            
+            updateAnimateButton() {
+                const btn = document.getElementById('animateBtn');
+                btn.classList.toggle('active', this.animate);
+                btn.textContent = this.animate ? 'Animate' : 'Pause';
+            }
+            
+            reset() {
+                this.rotation = 0;
+                this.rotationSpeed = 1.0;
+                this.lightPosition = [1.0, 1.0, 1.0];
+                this.shininess = 32.0;
+                this.animate = true;
+                
+                // Update UI
+                document.getElementById('rotationSlider').value = 1.0;
+                document.getElementById('rotationValue').textContent = '1.0';
+                document.getElementById('lightXSlider').value = 1.0;
+                document.getElementById('lightXValue').textContent = '1.0';
+                document.getElementById('lightYSlider').value = 1.0;
+                document.getElementById('lightYValue').textContent = '1.0';
+                document.getElementById('lightZSlider').value = 1.0;
+                document.getElementById('lightZValue').textContent = '1.0';
+                document.getElementById('shininessSlider').value = 32;
+                document.getElementById('shininessValue').textContent = '32';
+                this.updateAnimateButton();
+            }
+            
+            resizeCanvas() {
+                const rect = this.canvas.getBoundingClientRect();
+                this.canvas.width = rect.width * window.devicePixelRatio;
+                this.canvas.height = rect.height * window.devicePixelRatio;
+                this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+            }
+            
+            createMatrices() {
+                // Model matrix (rotation)
+                const model = this.createRotationMatrix(this.rotation);
+                
+                // View matrix (camera at z=2 looking at origin)
+                const view = this.createLookAtMatrix([0, 0, 2], [0, 0, 0], [0, 1, 0]);
+                
+                // Projection matrix (perspective)
+                const projection = this.createPerspectiveMatrix(45, this.canvas.width / this.canvas.height, 0.1, 100);
+                
+                // Normal matrix (inverse transpose of model matrix)
+                const normalMatrix = this.createNormalMatrix(model);
+                
+                // Set matrix uniforms
+                this.gl.uniformMatrix4fv(this.uniforms.model, false, model);
+                this.gl.uniformMatrix4fv(this.uniforms.view, false, view);
+                this.gl.uniformMatrix4fv(this.uniforms.projection, false, projection);
+                this.gl.uniformMatrix3fv(this.uniforms.normalMatrix, false, normalMatrix);
+                
+                return { model, view, projection, normalMatrix };
+            }
+            
+            createRotationMatrix(angle) {
+                const c = Math.cos(angle);
+                const s = Math.sin(angle);
+                return new Float32Array([
+                    c, -s, 0, 0,
+                    s,  c, 0, 0,
+                    0,  0, 1, 0,
+                    0,  0, 0, 1
+                ]);
+            }
+            
+            createLookAtMatrix(eye, center, up) {
+                const f = this.normalize([center[0] - eye[0], center[1] - eye[1], center[2] - eye[2]]);
+                const s = this.normalize(this.cross(f, up));
+                const u = this.cross(s, f);
+                
+                return new Float32Array([
+                    s[0], u[0], -f[0], 0,
+                    s[1], u[1], -f[1], 0,
+                    s[2], u[2], -f[2], 0,
+                    -this.dot(s, eye), -this.dot(u, eye), this.dot(f, eye), 1
+                ]);
+            }
+            
+            createPerspectiveMatrix(fov, aspect, near, far) {
+                const f = Math.tan(Math.PI * 0.5 - 0.5 * fov * Math.PI / 180);
+                const rangeInv = 1.0 / (near - far);
+                
+                return new Float32Array([
+                    f / aspect, 0, 0, 0,
+                    0, f, 0, 0,
+                    0, 0, (near + far) * rangeInv, -1,
+                    0, 0, near * far * rangeInv * 2, 0
+                ]);
+            }
+            
+            createNormalMatrix(model) {
+                // For rotation matrices, normal matrix is the same as model matrix (3x3)
+                return new Float32Array([
+                    model[0], model[1], model[2],
+                    model[4], model[5], model[6],
+                    model[8], model[9], model[10]
+                ]);
+            }
+            
+            normalize(v) {
+                const len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+                return [v[0] / len, v[1] / len, v[2] / len];
+            }
+            
+            cross(a, b) {
+                return [
+                    a[1] * b[2] - a[2] * b[1],
+                    a[2] * b[0] - a[0] * b[2],
+                    a[0] * b[1] - a[1] * b[0]
+                ];
+            }
+            
+            dot(a, b) {
+                return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+            }
+            
+            render() {
+                // Update rotation if animating
+                if (this.animate) {
+                    this.rotation += this.rotationSpeed * 0.02;
+                }
+                
+                // Clear canvas
+                this.gl.clearColor(0.1, 0.1, 0.1, 1.0);
+                this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
+                
+                // Enable depth testing
+                this.gl.enable(this.gl.DEPTH_TEST);
+                
+                // Use program
+                this.gl.useProgram(this.program);
+                
+                // Create and set matrices
+                this.createMatrices();
+                
+                // Set lighting uniforms
+                this.gl.uniform3fv(this.uniforms.lightPosition, this.lightPosition);
+                this.gl.uniform1f(this.uniforms.shininess, this.shininess);
+                this.gl.uniform3fv(this.uniforms.viewPosition, [0, 0, 2]);
+                
+                // Setup attributes
+                this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vbo);
+                
+                // Position attribute
+                this.gl.enableVertexAttribArray(this.positionLocation);
+                this.gl.vertexAttribPointer(this.positionLocation, 3, this.gl.FLOAT, false, 6 * 4, 0);
+                
+                // Normal attribute
+                this.gl.enableVertexAttribArray(this.normalLocation);
+                this.gl.vertexAttribPointer(this.normalLocation, 3, this.gl.FLOAT, false, 6 * 4, 3 * 4);
+                
+                // Draw triangle
+                this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+                
+                // Continue animation loop
+                requestAnimationFrame(() => this.render());
+            }
+            
+            updateStatus(message, type = '') {
+                const status = document.getElementById('status');
+                status.textContent = message;
+                status.className = `status ${type}`;
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            new PhongTriangleRenderer();
+        });
+    </script>
+</body>
+</html>

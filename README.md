@@ -1,6 +1,6 @@
 # Computer Graphics Course
 
-This repository contains sample code and demos for Computer Graphics course in both Python and C++.
+This repository contains sample code and demos for Computer Graphics course in Python, C++, and WebGL.
 
 ## Structure
 
@@ -28,6 +28,18 @@ CPP/
 ├── build.bat                           # Windows build script
 ├── setup_dependencies.sh               # Automated dependency setup
 └── README.md                           # C++ specific documentation
+
+HTML/
+├── index.html                          # Main demo index page
+└── Triangle/                           # WebGL Triangle demos
+    ├── simple_triangle.html            # Basic triangle demo
+    ├── triangle_demo.html              # Advanced triangle demo
+    ├── interactive_triangle.html       # Interactive triangle with mouse controls
+    ├── phong_triangle.html             # Phong lighting demo
+    ├── simple_rose_texture.html        # Simple rose texture demo
+    ├── rose_textured_triangle.html     # Advanced rose texture with effects
+    ├── rose.png                        # Rose texture image
+    └── README.md                       # WebGL specific documentation
 ```
 
 ## Triangle Demos
@@ -109,6 +121,48 @@ Five different approaches to rendering triangles in C++:
 - Texture flipping for correct orientation
 - Interactive color tinting
 
+### WebGL Demos
+
+Six different approaches to rendering triangles in WebGL:
+
+### 1. Simple Triangle (`simple_triangle.html`)
+- Basic triangle rendering with minimal setup
+- Single color triangle
+- WebGL 1.0 with shaders
+- Perfect for understanding fundamentals
+
+### 2. Triangle Demo (`triangle_demo.html`)
+- Triangle with interpolated colors (red, green, blue vertices)
+- Modern WebGL 1.0 with shader pipeline
+- VBO and attribute setup
+- Responsive design
+
+### 3. Interactive Triangle (`interactive_triangle.html`)
+- Advanced demo with mouse interaction and animation
+- Real-time color changes
+- Interactive controls
+- Dynamic effects
+
+### 4. Phong Triangle (`phong_triangle.html`)
+- Triangle with Phong lighting model
+- Ambient, diffuse, and specular lighting
+- Interactive light source positioning
+- Adjustable shininess
+- 3D perspective projection
+
+### 5. Simple Rose Texture (`simple_rose_texture.html`)
+- Triangle with rose texture mapping
+- Image texture loading
+- Texture coordinates
+- Clean, simple implementation
+
+### 6. Advanced Rose Texture (`rose_textured_triangle.html`)
+- Full-featured textured triangle with effects
+- Rose texture with rotation animation
+- Color tinting controls (RGB sliders)
+- Texture effects (normal, invert, grayscale)
+- Matrix transformations
+
 ## Requirements
 
 ### Python Requirements
@@ -130,6 +184,12 @@ Five different approaches to rendering triangles in C++:
 - **GLM** (mathematics library)
 - **STB Image** (image loading)
 
+### WebGL Requirements
+
+- **Modern Web Browser** with WebGL 1.0 support
+- **Local HTTP Server** (for texture loading)
+- **No additional dependencies** - runs in browser
+
 ## Installation
 
 ### Python Installation
@@ -149,6 +209,20 @@ cd CPP
 
 #### Manual Setup
 See [CPP/README.md](CPP/README.md) for detailed instructions.
+
+### WebGL Installation
+
+```bash
+# Start local HTTP server
+cd HTML
+python -m http.server 8000
+
+# Or use any other HTTP server
+# npx serve HTML
+# php -S localhost:8000 -t HTML
+```
+
+Then open: http://localhost:8000
 
 ## Usage
 
@@ -189,6 +263,23 @@ cd CPP/build
 .\Release\rose_textured_triangle.exe
 ```
 
+### WebGL Demos
+
+```bash
+# Start HTTP server
+cd HTML
+python -m http.server 8000
+
+# Open in browser
+# http://localhost:8000 - Main index page
+# http://localhost:8000/Triangle/simple_triangle.html
+# http://localhost:8000/Triangle/triangle_demo.html
+# http://localhost:8000/Triangle/interactive_triangle.html
+# http://localhost:8000/Triangle/phong_triangle.html
+# http://localhost:8000/Triangle/simple_rose_texture.html
+# http://localhost:8000/Triangle/rose_textured_triangle.html
+```
+
 ## Controls
 
 ### Python Demos
@@ -205,16 +296,24 @@ cd CPP/build
 - **Textured Triangle**: R/G/B/W for color tinting
 - **Rose Textured Triangle**: R/G/B/W for color tinting
 
+### WebGL Demos
+- **All demos**: Mouse interaction, keyboard controls
+- **Interactive Triangle**: Mouse to change colors
+- **Phong Triangle**: Sliders for light position and shininess
+- **Rose Textured Triangle**: Sliders for rotation speed, scale, color tinting
+- **Texture Effects**: Buttons for normal, invert, grayscale modes
+
 ## Comparison
 
-| Feature | Python | C++ |
-|---------|--------|-----|
-| **Setup** | Simple pip install | CMake + dependencies |
-| **Performance** | Slower | Faster |
-| **Cross-platform** | ✅ | ✅ |
-| **Dependencies** | Many | Few |
-| **Learning curve** | Easy | Moderate |
-| **Production use** | Prototyping | Production |
+| Feature | Python | C++ | WebGL |
+|---------|--------|-----|-------|
+| **Setup** | Simple pip install | CMake + dependencies | HTTP server only |
+| **Performance** | Slower | Faster | Fast (GPU) |
+| **Cross-platform** | ✅ | ✅ | ✅ (Browser) |
+| **Dependencies** | Many | Few | None |
+| **Learning curve** | Easy | Moderate | Easy |
+| **Production use** | Prototyping | Production | Web apps |
+| **Accessibility** | Local install | Local install | URL only |
 
 ## Contributing
 
